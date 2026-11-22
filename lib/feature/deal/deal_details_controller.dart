@@ -23,11 +23,14 @@ class DealDetailsController extends GetxController {
   final _quantityLeft = RxnInt();
   int? get quantityLeft => _quantityLeft.value;
 
+  final isFlashSaleExpired = false.obs;
+
   @override
   void onInit() {
     super.onInit();
     deal = Get.arguments as DealModel;
     _quantityLeft.value = deal.quantityLeft;
+    isFlashSaleExpired.value = deal.isFlashSaleExpired;
     analytics.logEvent('deal_details_view', {
       'deal_id': deal.id,
       'source': Get.parameters['source'] ?? 'unknown',
@@ -44,8 +47,18 @@ class DealDetailsController extends GetxController {
     _quantityLeft.value = fresh.quantityLeft;
   }
 
+  void onFlashSaleExpired() {
+    if (!deal.isFlashSale) return;
+    isFlashSaleExpired.value = true;
+    cartService.expireFlashSale(deal.id);
+  }
+
   void addToCart() {
-    cartService.add(deal);
+    if (deal.isFlashSaleExpired || isFlashSaleExpired.value) {
+      onFlashSaleExpired();
+      return;
+    }
+    if (!cartService.add(deal)) return;
     Get.snackbar(
       'Added to bag',
       '${deal.name} — pick up ${deal.pickupWindow.label}',

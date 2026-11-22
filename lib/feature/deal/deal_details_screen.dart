@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../app_config.dart';
+import '../shared_widget/flash_sale_countdown.dart';
 import '../shared_widget/the_network_image.dart';
 import 'deal_details_controller.dart';
 
@@ -33,11 +34,11 @@ class DealDetailsScreen extends GetView<DealDetailsController> {
                           fontSize: 22, fontWeight: FontWeight.bold)),
                   const SizedBox(height: 4),
                   Text(deal.storeName,
-                      style: TextStyle(
-                          fontSize: 15, color: Colors.grey.shade700)),
+                      style:
+                          TextStyle(fontSize: 15, color: Colors.grey.shade700)),
                   Text(deal.storeAddress,
-                      style: TextStyle(
-                          fontSize: 13, color: Colors.grey.shade500)),
+                      style:
+                          TextStyle(fontSize: 13, color: Colors.grey.shade500)),
                   const SizedBox(height: 16),
                   Row(
                     children: [
@@ -56,10 +57,32 @@ class DealDetailsScreen extends GetView<DealDetailsController> {
                       Obx(() => Chip(
                             avatar: const Icon(Icons.inventory_2_outlined,
                                 size: 16),
-                            label: Text('${controller.quantityLeft ?? '-'} left'),
+                            label:
+                                Text('${controller.quantityLeft ?? '-'} left'),
                           )),
                     ],
                   ),
+                  if (deal.isFlashSale) ...[
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        const Icon(Icons.bolt, size: 16, color: Colors.red),
+                        const SizedBox(width: 4),
+                        const Text('Flash sale ends in',
+                            style: TextStyle(
+                                fontSize: 13, fontWeight: FontWeight.w600)),
+                        const SizedBox(width: 6),
+                        FlashSaleCountdown(
+                          endsAt: deal.flashSaleEndsAt!,
+                          onExpired: controller.onFlashSaleExpired,
+                          style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.red),
+                        ),
+                      ],
+                    ),
+                  ],
                   const SizedBox(height: 16),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -98,8 +121,8 @@ class DealDetailsScreen extends GetView<DealDetailsController> {
                   ),
                   const SizedBox(height: 16),
                   const Text('What you get',
-                      style: TextStyle(
-                          fontSize: 16, fontWeight: FontWeight.w600)),
+                      style:
+                          TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
                   const SizedBox(height: 6),
                   Text(deal.description,
                       style: TextStyle(
@@ -130,11 +153,16 @@ class DealDetailsScreen extends GetView<DealDetailsController> {
         color: Colors.white,
         child: SizedBox(
           width: double.infinity,
-          child: FilledButton.icon(
-            onPressed: controller.addToCart,
-            icon: const Icon(Icons.add_shopping_cart),
-            label: const Text('Add to bag'),
-          ),
+          child: Obx(() {
+            final expired =
+                controller.isFlashSaleExpired.value || deal.isFlashSaleExpired;
+            return FilledButton.icon(
+              onPressed: expired ? null : controller.addToCart,
+              icon: Icon(
+                  expired ? Icons.timer_off_outlined : Icons.add_shopping_cart),
+              label: Text(expired ? 'Expired' : 'Add to bag'),
+            );
+          }),
         ),
       ),
     );
